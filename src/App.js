@@ -6,7 +6,9 @@ function App() {
   const [search, setSearch] = useState("");
   const [searchSub, setSearchSub] = useState("");
   const [items, setItems] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [pageNum, setPageNum] = useState(1);
 
   useEffect(() => {
     setIsFetching(true);
@@ -14,10 +16,13 @@ function App() {
       ? setIsFetching(false)
       : axios
           .get(
-            `https://www.googleapis.com/books/v1/volumes?q=${search}&key=${API_KEY}`
+            `https://www.googleapis.com/books/v1/volumes?q=${search}&maxResults=10&key=${API_KEY}&startIndex=${
+              (pageNum - 1) * 10
+            }`
           )
           .then((res) => {
             console.log(res.data);
+            setTotalItems(res.data.totalItems);
             res.data.totalItems > 0 ? setItems(res.data.items) : setItems([]);
             setIsFetching(false);
           })
@@ -25,7 +30,7 @@ function App() {
             setIsFetching(false);
             console.log(err);
           });
-  }, [searchSub]);
+  }, [searchSub, pageNum]);
 
   return (
     <div className="App">
@@ -46,27 +51,48 @@ function App() {
             searchSub && <p>`No result matching ${searchSub}`</p>
           )
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <td>Title</td>
-                <td>Authers</td>
-                <td>published Date</td>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                //console.log(item.volumeInfo.authors);
-                return (
-                  <tr key={item.id}>
-                    <td>{item.volumeInfo.title}</td>
-                    <td>{item.volumeInfo.authors}</td>
-                    <td>{item.volumeInfo.publishedDate}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <td>Title</td>
+                  <td>Authers</td>
+                  <td>published Date</td>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  //console.log(item.volumeInfo.authors);
+                  return (
+                    <tr key={item.id}>
+                      <td>{item.volumeInfo.title}</td>
+                      <td>{item.volumeInfo.authors}</td>
+                      <td>{item.volumeInfo.publishedDate}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <button
+              disabled={pageNum === 1}
+              onClick={() => {
+                setPageNum(pageNum - 1);
+              }}
+            >
+              {" "}
+              {" < "}{" "}
+            </button>
+            <button>{pageNum}</button>
+            <button
+              disabled={pageNum === Math.ceil(totalItems / 10)}
+              onClick={() => {
+                setPageNum(pageNum + 1);
+              }}
+            >
+              {" "}
+              {" > "}{" "}
+            </button>
+          </div>
         )}
       </div>
     </div>
